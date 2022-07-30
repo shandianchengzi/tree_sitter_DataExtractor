@@ -60,7 +60,9 @@ class AstTraverse:
         self.extract_data_flow()
         self.extract_ncs_flow()
 
+    # 用dfg.py提取了ComesFrom、ComputedFrom边
     def extract_data_flow(self):
+        # 1. 前期准备，准备dfg.py的函数需要的输入内容(字典：{(start, end): (index, code)})
         # 获取叶子节点在AST结点列表中的index。
         leaves_ast_index = [self.context_graph['Edges']['NextToken'][0][0]] + \
                            [x[1] for x in self.context_graph['Edges']['NextToken']]
@@ -72,15 +74,18 @@ class AstTraverse:
         start_end_to_code = {}  # 字典：{(start, end): (index, code)}
         for order, (index, start_end, code) in enumerate(zip(leaves_ast_index, leaves_start_end, leaves_code)):
             start_end_to_code[start_end] = (index, code)  # index_to_code = dict((start,end):(叶子节点的index, 代码))
+
+        # 2. 调用dfg.py中的函数，得到返回的四元组
+        # dfg: (code, idx, "edgeType", [codes],[idx])
         try:
             dfg, _ = dfg_func_dict[self.lang](self._root_node, start_end_to_code, {})
         except Exception as e:
             dfg = []
-
-        # 将dfg四元组转换成边的dict
+        # 根据四元组中的idx排序
         dfg = sorted(dfg, key=lambda x: x[1])
-        # dfg: (code, idx, "edgeType", [codes],[idx])
 
+        # 3. 处理返回的dfg四元组
+        # 过滤掉添加的异常四元组
         index = set()
         for d in dfg:
             if len(d[-1]) != 0:
@@ -92,7 +97,7 @@ class AstTraverse:
             if d[1] in index:
                 new_dfg.append(d)
         dfg = new_dfg
-
+        # 将dfg四元组转换成边的dict
         dfg_edge_dict = dict()  # 存储了边类型到 边的映射。
         for d in dfg:
             if d[2] not in dfg_edge_dict:
@@ -101,11 +106,12 @@ class AstTraverse:
                 # 将d[4]中的idx和d[1]组合成边
                 dfg_edge_dict[d[2]].append([from_idx, d[1]])
 
-        # 将dfg边添加到数据集的边中
+        # 4. 将dfg边转换成上下文图的边
         for edge_name, edge_list in dfg_edge_dict.items():
             for edge in edge_list:
                 add_edge(self.context_graph, edge_name, edge[0], edge[1])
 
+    # 添加cfg相关的边
     def add_cfg_edges(self, node):
         condition_node = None
         last_block = None
@@ -167,6 +173,7 @@ class AstTraverse:
                         add_edge(self.context_graph, 'ForExec', condition_node,
                                  self.context_graph['nodes'].index(any_node))
 
+    # 添加ReturnsTo边
     def add_returns_to_edges(self, node):
         if node.type == 'return_statement':
             try:
@@ -181,7 +188,7 @@ class AstTraverse:
                 dst_node = self.context_graph['nodes'].index(node.parent.children[-3])  # public <dst> func(args){block}
                 add_edge(self.context_graph, 'ReturnsTo', ori_node, dst_node)
 
-    # 获取前序遍历顺序的结点列表，并添加ReturnsTo边
+    # 获取前序遍历顺序的结点列表，并添加ReturnsTo边、CFG相关的边
     def pre_traverse(self, node_list, node):
         if node.type == "comment":  # 忽略注释结点
             return
@@ -195,6 +202,7 @@ class AstTraverse:
         # 尝试添加CFG相关的边
         self.add_cfg_edges(node)
 
+    # 先前序遍历(调用pre_traverse)，然后利用返回的结点列表提取NCS
     def extract_ncs_flow(self):
         # 获取ncs边
         # 获取所有的AST Node，按照先序深度优先遍历，然后连接各个节点
@@ -222,29 +230,27 @@ class AstTraverse:
 
     # 提取slot和candidate
     def add_slot_and_candidate(self, node):
-        if node.type == 'identifier':
-            # 将结点的Label直接设置为标识符
-            self.context_graph['NodeLabels'][str(self.node_cnt)] = str(node.text, encoding='utf-8')
-            # 判断是否是不被允许的名称
-            if node.text in self._text_not_allow:
-                pass
-            elif node.text in self._text_seen:
-                # 见过的结点
-                # 只将祖先中有method_declaration的结点记为slot
-                node_pre = node
-                while node_pre.parent \
-                        and node_pre.parent.type != 'method_declaration'\
-                        and node_pre.parent.type != "function_definition":
-                    node_pre = node_pre.parent
-                if node_pre.parent:
-                    self.slot_nodes.append(node)
-                    self.slot_methods.append(node_pre.parent)
-            else:
-                # 没见过的结点
-                self._text_seen.add(node.text)
-                self.candidates_node.append(node)
+        # 判断是否是不被允许的名称
+        if node.text in self._text_not_allow:
+            return
+        if node.text in self._text_seen:
+            # 见过的结点
+            # 只将祖先中有method_declaration或函数声明的结点记为slot
+            # 并记录方法/函数声明的祖先节点
+            node_pre = node
+            while node_pre.parent \
+                    and node_pre.parent.type != 'method_declaration'\
+                    and node_pre.parent.type != "function_definition":
+                node_pre = node_pre.parent
+            if node_pre.parent:
+                self.slot_nodes.append(node)
+                self.slot_methods.append(node_pre.parent)
+        else:
+            # 没见过的结点
+            self._text_seen.add(node.text)
+            self.candidates_node.append(node)
 
-    # 中序遍历，并添加Child、NextToken边
+    # 中序遍历，并添加Child、NextToken边，并提取slot和candidate
     def in_traverse(self, node):
         if node.type == "comment":  # 忽略注释结点
             return
@@ -261,37 +267,25 @@ class AstTraverse:
         if node.child_count == 0:
             add_edge(self.context_graph, 'NextToken', self.last_token, self.node_cnt)
             self.last_token = self.node_cnt
-            # 提取slot和candidate
-            self.add_slot_and_candidate(node)
+            if node.type == 'identifier':
+                # 将结点的Label直接设置为标识符
+                self.context_graph['NodeLabels'][str(self.node_cnt)] = str(node.text, encoding='utf-8')
+                # 提取slot和candidate
+                self.add_slot_and_candidate(node)
         self.node_cnt = self.node_cnt + 1
         # 再记录孩子结点的信息
         for child in node.children:
             self.in_traverse(child)
 
-    # 层序遍历，并添加Child边
-    def level_traverse(self):
-        self.node_cnt = 0
-        node_queue = [self._root_node]  # 当前node队列
-        while len(node_queue):
-            node_now = node_queue.pop(0)
-            # 记录当前节点
-            self.context_graph['nodes'].append(node_now)
-            self.context_graph['NodeLabels'][str(self.node_cnt)] = node_now.type
-            if node_now.parent:
-                add_edge(self.context_graph, 'Child', self.context_graph['nodes'].index(node_now.parent), self.node_cnt)
-            self.node_cnt = self.node_cnt + 1
-
-    # 根据语法树遍历得到Child边
+    # 根据语法树遍历
     def ast_traverse(self):
         # 中序遍历
         self.in_traverse(self._root_node)
 
-        # 层序遍历
-        # self.level_traverse(context_graph, root_node)
-
+    # 构建slot结点的上下文图
     def construct_slot_context(self, input_path, output_path):
         with gzip.open(output_path, 'w') as f:
-            pass  # 清空原数据集
+            pass  # 清空原数据集，以免之前提取的结果影响本次提取测试
         for idx, (slot_node, slot_method) in enumerate(zip(self.slot_nodes, self.slot_methods)):
             n = 8  # 选n个以内的candidate
             if len(self.candidates_node) < n:
