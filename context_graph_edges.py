@@ -76,7 +76,8 @@ class AstTraverse:
             dfg, _ = dfg_func_dict[self.lang](self._root_node, start_end_to_code, {})
         except Exception as e:
             dfg = []
-        # TODO: SSD: 以下代码不知道啥用
+
+        # 将dfg四元组转换成边的dict
         dfg = sorted(dfg, key=lambda x: x[1])
         # dfg: (code, idx, "edgeType", [codes],[idx])
 
@@ -99,7 +100,6 @@ class AstTraverse:
             for from_idx in d[4]:
                 # 将d[4]中的idx和d[1]组合成边
                 dfg_edge_dict[d[2]].append([from_idx, d[1]])
-        # TODO: SSD: 以上代码不知道啥用
 
         # 将dfg边添加到数据集的边中
         for edge_name, edge_list in dfg_edge_dict.items():

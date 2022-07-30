@@ -1173,6 +1173,3 @@ def DFG_javascript(root_node, index_to_code, states):
                 DFG += temp
 
         return sorted(DFG, key=lambda x: x[1]), states
-
-
-
