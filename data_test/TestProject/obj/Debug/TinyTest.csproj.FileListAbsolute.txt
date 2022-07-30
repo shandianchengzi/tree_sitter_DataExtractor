@@ -1,0 +1,8 @@
+E:\资料\计算机\作品赛\bert_vm\作品执行文件\Extractor\CSharpExtractor\TestProject\bin\Debug\TinyTest.exe.config
+E:\资料\计算机\作品赛\bert_vm\作品执行文件\Extractor\CSharpExtractor\TestProject\bin\Debug\TinyTest.exe
+E:\资料\计算机\作品赛\bert_vm\作品执行文件\Extractor\CSharpExtractor\TestProject\bin\Debug\TinyTest.pdb
+E:\资料\计算机\作品赛\bert_vm\作品执行文件\Extractor\CSharpExtractor\TestProject\obj\Debug\TinyTest.csproj.AssemblyReference.cache
+E:\资料\计算机\作品赛\bert_vm\作品执行文件\Extractor\CSharpExtractor\TestProject\obj\Debug\TinyTest.csproj.SuggestedBindingRedirects.cache
+E:\资料\计算机\作品赛\bert_vm\作品执行文件\Extractor\CSharpExtractor\TestProject\obj\Debug\TinyTest.csproj.CoreCompileInputs.cache
+E:\资料\计算机\作品赛\bert_vm\作品执行文件\Extractor\CSharpExtractor\TestProject\obj\Debug\TinyTest.exe
+E:\资料\计算机\作品赛\bert_vm\作品执行文件\Extractor\CSharpExtractor\TestProject\obj\Debug\TinyTest.pdb
