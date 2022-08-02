@@ -55,13 +55,15 @@ def load_graph(path):
         return context_graph
 
 
+# input：path:数据集路径；index:数据集条目索引；labels:需要显示的额外边的名称
+# 将数据集的某条数据可视化
 def show_graph(path, index, *labels):
+    # 1. 载入数据
     graph = load_graph(path)
     one_data = graph[index]
     child_edges = one_data['ContextGraph']['Edges']['Child']
     node_nums = len(one_data['ContextGraph']['NodeLabels'])
-
-    nt = Network('1000px', '1000px', directed=True)
+    # 2. 为结点按顺序选取不同的颜色（从深色冷色调到浅色暖色调，并为首个结点赋予特殊颜色，这种方法在结点超过255*2后相邻结点颜色可能重复）
     color = ['#00ffff']  # 为第一个结点赋予特殊颜色
     for x in range(node_nums - 1):
         current_of_color = int(x / node_nums * 255 * 2)
@@ -69,13 +71,15 @@ def show_graph(path, index, *labels):
             color.append('#%02x%02x%02x' % (255, current_of_color - 255, current_of_color - 255))
         else:
             color.append('#%02x%02x%02x' % (current_of_color, 0, 0))
-
+    # 3. 初始化画布，并添加结点和Child边
+    nt = Network('1000px', '1000px', directed=True)
     nt.add_nodes(range(node_nums),
                  title=[str(x) for x in range(node_nums)],
                  label=[one_data['ContextGraph']['NodeLabels'][str(x)] for x in range(node_nums)],
                  color=color
                  )
     nt.add_edges(child_edges)
+    # 4. 依次添加其他需要额外显示的边
     for idx, (label) in enumerate(labels):
         try:
             to_show_edges = one_data['ContextGraph']['Edges'][label]
@@ -86,5 +90,5 @@ def show_graph(path, index, *labels):
         except:
             print('no ' + label + ' edges')
             return
-
+    # 5. 显示图
     nt.show(path.split('/')[-1].split('.')[0] + str(index) + '.html')

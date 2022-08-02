@@ -287,14 +287,15 @@ class AstTraverse:
         with gzip.open(output_path, 'w') as f:
             pass  # 清空原数据集，以免之前提取的结果影响本次提取测试
         for idx, (slot_node, slot_method) in enumerate(zip(self.slot_nodes, self.slot_methods)):
-            n = 8  # 选n个以内的candidate
+            # 1. 随机选n个以内的candidate
+            n = 8
             if len(self.candidates_node) < n:
                 candidate_nodes = self.candidates_node
             else:
                 candidate_nodes = random.sample(self.candidates_node, n)  # 随机选取
-            symbol_candidates = []
+            # 2. 利用AstTraverse选取slot结点的AST
             traverse = AstTraverse(self.lang, slot_method, len(candidate_nodes) + 1)
-            # 替换成slot结点（index为0）
+            # 3. 将原结点替换成slot结点（index更改为为0）
             slot_index = traverse.context_graph['nodes'].index(slot_node)
             for edge_name, edges in traverse.context_graph['Edges'].items():
                 for i in range(len(edges)):
@@ -303,31 +304,34 @@ class AstTraverse:
                     if edges[i][1] == slot_index:
                         edges[i][1] = 0
                 traverse.context_graph['Edges'][edge_name] = edges
-            # 添加slot结点
+            # 4. 在节点列表、节点标签列表、候选词列表中添加中slot结点和candidate结点
+            # 4.1 在节点列表、节点标签列表中添加slot结点
             traverse.context_graph['nodes'][0] = slot_node
             traverse.context_graph['NodeLabels'][0] = "<SLOT>"
-            symbol_candidates.append({
+            # 在候选词列表中添加slot结点
+            symbol_candidates = [{
                 "SymbolDummyNode": 1,
                 "SymbolName": str(slot_node.text, encoding='utf-8'),
                 "IsCorrect": True
-            })
-            # 添加candidate结点
+            }]
+            # 4.2 添加candidate
             for i in range(len(candidate_nodes)):
-                # 添加LastLexicalUse边使候选结点指向AST中的原结点
+                # 添加LastLexicalUse边使candidate指向AST中的原结点
                 try:
                     add_edge(traverse.context_graph, "LastLexicalUse",
                              i + 1, traverse.context_graph['nodes'].index(candidate_nodes[i]))
                 except ValueError:
                     print("new AST hasn't '%s' candidate." % candidate_nodes[i].text)
+                # 在节点列表、节点标签列表中添加candidate结点
                 traverse.context_graph['nodes'][i + 1] = candidate_nodes[i]
                 traverse.context_graph['NodeLabels'][i + 1] = str(candidate_nodes[i].text, encoding='utf-8')
-                symbol_candidate = {
+                # 在候选词中添加candidate结点
+                symbol_candidates.append({
                     "SymbolDummyNode": i + 2,
                     "SymbolName": str(candidate_nodes[i].text, encoding='utf-8'),
                     "IsCorrect": False
-                }
-                symbol_candidates.append(symbol_candidate)
-            # 写入数据集
+                })
+            # 5. 写入数据集
             with gzip.open(output_path, 'a') as f:
                 del traverse.context_graph['nodes']
                 slot_data = {
