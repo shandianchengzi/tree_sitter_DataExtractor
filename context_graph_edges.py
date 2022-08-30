@@ -77,8 +77,11 @@ class AstTraverse:
         self.extract_data_flow()
         self.extract_ncs_flow()
 
-    # 用dfg.py提取了ComesFrom、ComputedFrom边
     def extract_data_flow(self):
+        """
+        Usage:
+            用dfg.py添加DFG相关边(包括提取ComesFrom、ComputedFrom边)，并存储到self.context_graph中
+        """
         # 1. 前期准备，准备dfg.py的函数需要的输入内容(字典：{(start, end): (index, code)})
         # 获取叶子节点在AST结点列表中的index。
         leaves_ast_index = [self.context_graph['Edges']['NextToken'][0][0]] + \
@@ -128,8 +131,13 @@ class AstTraverse:
             for edge in edge_list:
                 add_edge(self.context_graph, edge_name, edge[0], edge[1])
 
-    # 添加cfg相关的边
     def add_cfg_edges(self, node):
+        """
+        Usage:
+            添加CFG相关的边(包括CondTrue/CondFalse/WhileExec/WhileNext/ForExec/ForNext/NextStmt边)，并存储到self.context_graph中
+        Args:
+            node: 当前遍历的结点
+        """
         condition_node = None
         last_block = None
         # 添加CondTrue和CondFalse边。Condition→block。
@@ -165,6 +173,7 @@ class AstTraverse:
                              self.context_graph['nodes'].index(any_node))
                     add_edge(self.context_graph, 'WhileNext',
                              self.context_graph['nodes'].index(any_node), condition_node)
+        # 添加ForExec和ForNext边，Condition↔block
         elif node.type == 'for_statement':
             semicolon_nums = 0  # 分号的数量
             after_parentheses = 0  # 是否在括号后面
@@ -190,8 +199,14 @@ class AstTraverse:
                         add_edge(self.context_graph, 'ForExec', condition_node,
                                  self.context_graph['nodes'].index(any_node))
 
-    # 添加ReturnsTo边
+    #
     def add_returns_to_edges(self, node):
+        """
+        Usage:
+            添加ReturnsTo边，并存储到self.context_graph中
+        Args:
+            node: 当前遍历的结点
+        """
         if node.type == 'return_statement':
             try:
                 ori_node = self.context_graph['nodes'].index(node.children[1])  # return <ori>;
@@ -205,8 +220,14 @@ class AstTraverse:
                 dst_node = self.context_graph['nodes'].index(node.parent.children[-3])  # public <dst> func(args){block}
                 add_edge(self.context_graph, 'ReturnsTo', ori_node, dst_node)
 
-    # 获取前序遍历顺序的结点列表，并添加ReturnsTo边、CFG相关的边
     def pre_traverse(self, node_list, node):
+        """
+        Usage:
+            获取前序遍历顺序的结点列表，并在遍历过程中添加ReturnsTo边、CFG相关的边
+        Args:
+            node_list: 结点列表，用于存储遍历结果
+            node: 当前遍历的结点
+        """
         if node.type == "comment":  # 忽略注释结点
             return
         # 再记录孩子结点的信息
@@ -219,8 +240,11 @@ class AstTraverse:
         # 尝试添加CFG相关的边
         self.add_cfg_edges(node)
 
-    # 先前序遍历(调用pre_traverse)，然后利用返回的结点列表提取NCS
     def extract_ncs_flow(self):
+        """
+        Usage:
+            先调用pre_traverse，然后利用pre_traverse得到的结点列表提取NCS
+        """
         # 获取ncs边
         # 获取所有的AST Node，按照先序深度优先遍历，然后连接各个节点
         # 先序遍历AST，添加遍历的边
@@ -233,8 +257,14 @@ class AstTraverse:
         for i in range(len(node_list) - 1):
             add_edge(self.context_graph, 'NCS', node_list[i], node_list[i + 1])
 
-    # 过滤非变量的identifier结点
     def fill_not_allow_list(self, node):
+        """
+        Usage:
+            测试当前遍历的结点是否是非变量的identifier结点，如果是，则添加到self._text_not_allow中，
+            用于过滤非变量的identifier结点。
+        Args:
+            node: 当前遍历的结点
+        """
         sibling_not_allow = ['namespace', 'class', 'new']
         if node.type in sibling_not_allow:
             self._text_not_allow.add(node.next_named_sibling.text)
@@ -245,8 +275,13 @@ class AstTraverse:
             for one in invoked:
                 self._text_not_allow.add(one)
 
-    # 提取slot和candidate
     def add_slot_and_candidate(self, node):
+        """
+        Usage:
+            提取slot和candidate结点
+        Args:
+            node: 当前遍历的结点
+        """
         # 判断是否是不被允许的名称
         if node.text in self._text_not_allow:
             return
@@ -267,8 +302,13 @@ class AstTraverse:
             self._text_seen.add(node.text)
             self.candidates_node.append(node)
 
-    # 中序遍历，并添加Child、NextToken边，并提取slot和candidate
     def in_traverse(self, node):
+        """
+        Usage:
+            中序遍历，并添加Child、NextToken边，并提取slot和candidate
+        Args:
+            node: 当前遍历的结点
+        """
         if node.type == "comment":  # 忽略注释结点
             return
         # 记录当前节点
@@ -294,13 +334,23 @@ class AstTraverse:
         for child in node.children:
             self.in_traverse(child)
 
-    # 根据语法树遍历
     def ast_traverse(self):
+        """
+        Usage:
+            根据语法树遍历
+        """
         # 中序遍历
         self.in_traverse(self._root_node)
 
-    # 构建slot结点的上下文图
+    #
     def construct_slot_context(self, input_path, output_path):
+        """
+        Usage:
+            构建slot结点的上下文图
+        Args:
+            input_path: 输入的路径(用于构造数据条目中的filename项)
+            output_path: 输出的路径(用于存放输出的数据条目)
+        """
         with gzip.open(output_path, 'w') as f:
             pass  # 清空原数据集，以免之前提取的结果影响本次提取测试
         for idx, (slot_node, slot_method) in enumerate(zip(self.slot_nodes, self.slot_methods)):
