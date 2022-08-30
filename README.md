@@ -59,8 +59,21 @@ python main.py
 └─__pycache__  # pycharm的临时文件
 ```
 
+代码文件的主要调用关系：
+
+```bash
+├─main.py
+│  ├─content_parser.py
+│  │  │  tree_sitters/my-languages.so
+│  ├─context_graph_edges.py
+│  │  ├─dfg.py
+│  │  │  │  dfg_utils.py
+│  │  show_data.py
+```
+
+输入的测试代码文本在`data_test`文件夹下，输出的数据集在`output_dataset`文件夹下，输出的可视化html文件在根目录下。
+
 ## 主要运行流程
 
 
 
-因此，有两个输出：数据集、指定索引号的数据的可视化结果。
