@@ -4,6 +4,14 @@ from show_data import show_graph, test_show_edges
 
 
 def read_content(p):
+    """
+    Usage:
+        根据文件路径读取文件内容
+    Args:
+        p: 输入的代码文本路径
+    Returns:
+        输入的代码文本内容
+    """
     fp = open(p, 'rb')
     fc = fp.read().decode('utf-8')
     fp.close()
@@ -11,10 +19,10 @@ def read_content(p):
 
 
 if __name__ == "__main__":
-    '''
-    用处：
+    """
+    Usage：
         项目入口。输入代码文本，输出数据集，并可视化显示数据集中的某一条数据。
-    自定义参数：
+    Params：
         输入：
             path: 输入的代码文本的路径。(测试代码在data_test目录下，可任意选取其中的文件。)
             lang: 输入的代码文本对应的语言。(目前只支持c_sharp、python，其他的尚未测试，需要做适配。)
@@ -27,7 +35,7 @@ if __name__ == "__main__":
         可视化：
             index: 输出的数据集的第<index>条会被可视化显示。(不得超过数据集条数)
             edges_shown: 可视化结果中会显示的边。(如果为空，则结果中也会显示AST边。)
-    '''
+    """
     path = 'data_test/test.cs'  # 输入路径
     lang = 'c_sharp'  # 输入文件的语言
 

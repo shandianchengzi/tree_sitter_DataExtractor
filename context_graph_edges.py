@@ -6,6 +6,15 @@ import gzip
 
 
 def add_edge(context_graph, label, ori, des):
+    """
+    Usage:
+        在上下文图中添加从ori指向des的边，并标记为label
+    Args:
+        context_graph: 上下文图
+        label: 标签名称
+        ori: 起始结点
+        des: 指向结点
+    """
     if (ori is None) or (des is None) or ori < 0 or des < 0:
         return
     context_graph['Edges'][label].append([ori, des])
@@ -24,6 +33,14 @@ dfg_func_dict = {
 
 class AstTraverse:
     def __init__(self, lang, root_node, cnt):
+        """
+        Usage:
+            初始化一些参数或全局变量，并执行遍历功能
+        Args:
+            lang: 代码语言
+            root_node: tree_sitter解析的对象的根结点
+            cnt: 结点数量(为了设置数据集的起始结点号)
+        """
         self.lang = lang
         self._root_node = root_node  # 根节点
         self.node_cnt = cnt  # 结点计数器
