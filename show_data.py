@@ -3,8 +3,15 @@ import gzip
 import json
 
 
-# for debug
 def test_show_edges(context_graph, *labels):
+    """
+    Usage:
+        for debug。
+        用于显示上下文图的AST边和某些边。
+    Args:
+        context_graph: 需要显示的上下文图
+        *labels: 需要显示的额外边的名称
+    """
     # try:
     #     FormalArgNameEdges = node['ContextGraph']['Edges']['FormalArgName']
     # except:
@@ -43,6 +50,14 @@ def test_show_edges(context_graph, *labels):
 
 
 def load_graph(path):
+    """
+    Usage:
+        根据数据集文件路径读取数据集文件内容
+    Args:
+        path: 数据集的路径
+    Returns:
+        数据集内容
+    """
     with gzip.open(path, 'r') as f:
         content = f.read().decode('utf-8')
         context_graph = []
@@ -55,9 +70,17 @@ def load_graph(path):
         return context_graph
 
 
-# input：path:数据集路径；index:数据集条目索引；labels:需要显示的额外边的名称
-# 将数据集的某条数据可视化
 def show_graph(path, index, *labels):
+    """
+    Usage:
+        将数据集的某条数据可视化
+    Args:
+        path: 数据集路径
+        index: 数据集条目索引
+        *labels: 需要显示的额外边的名称
+    Returns:
+        根目录下生成一个html文件，文件名构成：输入代码文件名+index+.html。
+    """
     # 1. 载入数据
     graph = load_graph(path)
     one_data = graph[index]
