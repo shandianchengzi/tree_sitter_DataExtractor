@@ -199,7 +199,6 @@ class AstTraverse:
                         add_edge(self.context_graph, 'ForExec', condition_node,
                                  self.context_graph['nodes'].index(any_node))
 
-    #
     def add_returns_to_edges(self, node):
         """
         Usage:
@@ -210,7 +209,7 @@ class AstTraverse:
         if node.type == 'return_statement':
             try:
                 ori_node = self.context_graph['nodes'].index(node.children[1])  # return <ori>;
-            except IndexError:  # 如果return后面没有结点了，就用自己作为返回结点（用来适应python）
+            except IndexError:  # 如果return后面没有结点了，就用自己作为返回结点（用来适应python） # <ori: return>
                 ori_node = self.context_graph['nodes'].index(node)
             while node.parent \
                     and node.parent.type != 'method_declaration'\
@@ -220,10 +219,10 @@ class AstTraverse:
                 dst_node = self.context_graph['nodes'].index(node.parent.children[-3])  # public <dst> func(args){block}
                 add_edge(self.context_graph, 'ReturnsTo', ori_node, dst_node)
 
-    def pre_traverse(self, node_list, node):
+    def lrd_traverse(self, node_list, node):
         """
         Usage:
-            获取前序遍历顺序的结点列表，并在遍历过程中添加ReturnsTo边、CFG相关的边
+            获取后序遍历顺序的结点列表，并在遍历过程中添加ReturnsTo边、CFG相关的边
         Args:
             node_list: 结点列表，用于存储遍历结果
             node: 当前遍历的结点
@@ -232,7 +231,7 @@ class AstTraverse:
             return
         # 再记录孩子结点的信息
         for child in node.children:
-            self.pre_traverse(node_list, child)
+            self.lrd_traverse(node_list, child)
         # 记录当前节点
         node_list.append(self.context_graph['nodes'].index(node))
         # 尝试添加ReturnsTo边
@@ -243,13 +242,13 @@ class AstTraverse:
     def extract_ncs_flow(self):
         """
         Usage:
-            先调用pre_traverse，然后利用pre_traverse得到的结点列表提取NCS
+            先调用lrd_traverse，然后利用lrd_traverse得到的结点列表提取NCS
         """
         # 获取ncs边
         # 获取所有的AST Node，按照先序深度优先遍历，然后连接各个节点
         # 先序遍历AST，添加遍历的边
         node_list = []
-        self.pre_traverse(node_list, self._root_node)
+        self.lrd_traverse(node_list, self._root_node)
 
         if len(node_list) <= 1:
             print('结点数量过少，无法添加NCS边')
@@ -302,10 +301,10 @@ class AstTraverse:
             self._text_seen.add(node.text)
             self.candidates_node.append(node)
 
-    def in_traverse(self, node):
+    def pre_traverse(self, node):
         """
         Usage:
-            中序遍历，并添加Child、NextToken边，并提取slot和candidate
+            前序遍历，并添加Child、NextToken边，并提取slot和candidate
         Args:
             node: 当前遍历的结点
         """
@@ -332,15 +331,15 @@ class AstTraverse:
         self.node_cnt = self.node_cnt + 1
         # 再记录孩子结点的信息
         for child in node.children:
-            self.in_traverse(child)
+            self.pre_traverse(child)
 
     def ast_traverse(self):
         """
         Usage:
             根据语法树遍历
         """
-        # 中序遍历
-        self.in_traverse(self._root_node)
+        # 前序遍历
+        self.pre_traverse(self._root_node)
 
     #
     def construct_slot_context(self, input_path, output_path):
