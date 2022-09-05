@@ -42,8 +42,8 @@ if __name__ == "__main__":
     output_path = 'output_dataset/test.jsonl.gz'  # 输出路径
 
     index = 1  # 显示第<index>条数据集
-    edges_shown = ["LastLexicalUse", "ReturnsTo", "ForExec", "ForNext", "CondTrue",
-                   "CondFalse", "WhileExec", "WhileNext", "NextStmt"]  # 图上会显示的边
+    edges_shown = ["ComputedFrom", "LastLexicalUse"]# "ReturnsTo", "ForExec", "ForNext", "CondTrue",
+                   #"CondFalse", "WhileExec", "WhileNext", "NextStmt", "ComesFrom"]  # 图上会显示的边
 
     # 1. 读取文件内容
     file_content = read_content(path)
