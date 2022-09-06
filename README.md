@@ -45,6 +45,10 @@ python main.py
 │  │  已生成的边的构造方法.md
 │  │  未生成的边的概念.md
 │  │  遇到的问题和难点.md
+├─paper1_DataExtraction  # 第一篇论文团队提供的数据集提取代码
+├─papers  # 目标阅读的论文
+│  │  Learning to Represent Programs with Graphs.pdf
+│  │  Detecting Code Clones with Graph Neural Networkand Flow-Augment Abstract Syntax Tree.pdf
 ├─tree_sitters  # tree_sitter的各语言的写法
 │  │  my-languages.so
 │  ├─tree-sitter-c

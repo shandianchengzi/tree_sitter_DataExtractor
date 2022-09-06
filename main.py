@@ -36,7 +36,7 @@ if __name__ == "__main__":
             index: 输出的数据集的第<index>条会被可视化显示。(不得超过数据集条数)
             edges_shown: 可视化结果中会显示的边。(如果为空，则结果中也会显示AST边。)
     """
-    path = 'data_test/test.cs'  # 输入路径
+    path = 'data_test/o.cs'  # 输入路径
     lang = 'c_sharp'  # 输入文件的语言
 
     output_path = 'output_dataset/test.jsonl.gz'  # 输出路径
