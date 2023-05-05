@@ -17,7 +17,7 @@ pyvis >= 0.2.1
 
 ```bash
 conda create -n 名字 python=3.9
-pip install requirements.txt
+pip install -r requirements.txt
 python main.py
 ```
 
